@@ -1,0 +1,1038 @@
+{UTF-8}
+Maximum production rate=
+	35
+	~	Mt/Year
+	~	Saturation level of module production (stylised logistic path).
+	|
+
+Production growth rate=
+	0.3
+	~	1/Year
+	~	Logistic growth rate of module production.
+	|
+
+Production inflection year=
+	2022
+	~	Year
+	~	Year in which production reaches half its maximum.
+	|
+
+Production rate=
+	Maximum production rate/(1+EXP(-Production growth rate*(Time-Production inflection year\
+		)))
+	~	Mt/Year
+	~	Logistic module production P(t).
+	|
+
+Average product lifetime=
+	27.66
+	~	Year
+	~	Mean of the Weibull lifetime (shape 5.3759, scale 30 years; IRENA regular \
+		loss).
+	|
+
+Ageing chain outflow 1=
+	DELAY3I(Production rate, Average product lifetime/7, 0)
+	~	Mt/Year
+	~	Seven cascaded third-order delays form a 21st-order delay with the mean \
+		and variance of the Weibull lifetime.
+	|
+
+Ageing chain outflow 2=
+	DELAY3I(Ageing chain outflow 1, Average product lifetime/7, 0)
+	~	Mt/Year
+	~	Seven cascaded third-order delays form a 21st-order delay with the mean \
+		and variance of the Weibull lifetime.
+	|
+
+Ageing chain outflow 3=
+	DELAY3I(Ageing chain outflow 2, Average product lifetime/7, 0)
+	~	Mt/Year
+	~	Seven cascaded third-order delays form a 21st-order delay with the mean \
+		and variance of the Weibull lifetime.
+	|
+
+Ageing chain outflow 4=
+	DELAY3I(Ageing chain outflow 3, Average product lifetime/7, 0)
+	~	Mt/Year
+	~	Seven cascaded third-order delays form a 21st-order delay with the mean \
+		and variance of the Weibull lifetime.
+	|
+
+Ageing chain outflow 5=
+	DELAY3I(Ageing chain outflow 4, Average product lifetime/7, 0)
+	~	Mt/Year
+	~	Seven cascaded third-order delays form a 21st-order delay with the mean \
+		and variance of the Weibull lifetime.
+	|
+
+Ageing chain outflow 6=
+	DELAY3I(Ageing chain outflow 5, Average product lifetime/7, 0)
+	~	Mt/Year
+	~	Seven cascaded third-order delays form a 21st-order delay with the mean \
+		and variance of the Weibull lifetime.
+	|
+
+End of life flow=
+	DELAY3I(Ageing chain outflow 6, Average product lifetime/7, 0)
+	~	Mt/Year
+	~	End-of-life flow E: modules retiring from the stock of products in use.
+	|
+
+Demand=
+	Production rate
+	~	Mt/Year
+	~	Modules delivered to users; production is sold in the year it is made.
+	|
+
+Products in use=
+	INTEG(Demand-Collection flow-Uncollected flow, 0)
+	~	Mt
+	~	Stock of modules in operation (installed base).
+	|
+
+Collection flow=
+	Collection rate*End of life flow
+	~	Mt/Year
+	~	Collected end-of-life modules, c*E.
+	|
+
+Uncollected flow=
+	(1-Collection rate)*End of life flow
+	~	Mt/Year
+	~	End-of-life modules not collected (landfill or export).
+	|
+
+Capacity adjustment time=
+	4
+	~	Year
+	~	Time for recycling capacity to follow the required effort (tau_K).
+	|
+
+Capacity change rate=
+	(Collection flow*Target process intensity-Recycling capacity)/Capacity adjustment time
+	~	Mt/(Year*Year)
+	~	Loop B1: capacity follows the effort needed for the collection flow at \
+		target intensity.
+	|
+
+Recycling capacity=
+	INTEG(Capacity change rate, 0)
+	~	Mt/Year
+	~	Effort capacity K: tonnes per year that can be treated at reference \
+		intensity.
+	|
+
+Inventory clearance time=
+	1
+	~	Year
+	~	Time in which recyclers aim to clear the collected inventory (tau_B).
+	|
+
+Minimum process intensity=
+	0.5
+	~	Dmnl
+	~	Lowest process intensity under throughput pressure.
+	|
+
+Desired treatment rate=
+	Collected inventory/Inventory clearance time+Collection flow
+	~	Mt/Year
+	~	D = L/tau_B + c*E.
+	|
+
+Process intensity=
+	MIN(Target process intensity, MAX(Minimum process intensity, ZIDZ(Recycling capacity\
+		, Desired treatment rate)))
+	~	Dmnl
+	~	Achieved treatment effort per tonne (x). Loop B2: under throughput \
+		pressure recyclers lower intensity to raise throughput.
+	|
+
+Treatment rate=
+	MIN(Desired treatment rate, ZIDZ(Recycling capacity, Process intensity))
+	~	Mt/Year
+	~	Modules treated per year: min(D, K/x).
+	|
+
+Collected inventory=
+	INTEG(Collection flow-Treatment rate, 0)
+	~	Mt
+	~	Collected modules awaiting treatment (L in the paper).
+	|
+
+Scenario=
+	3
+	~	Dmnl
+	~	1 = S1 Low, 2 = S2 Medium, 3 = S3 High, 4 = S4 Near-closed.
+	|
+
+Final collection rate=
+	IF THEN ELSE(Scenario=1, 0.3, IF THEN ELSE(Scenario=2, 0.6, IF THEN ELSE(Scenario=3,\
+		 0.85, 0.95)))
+	~	Dmnl
+	~	Collection rate reached at the policy completion year.
+	|
+
+Final process intensity=
+	IF THEN ELSE(Scenario=1, 0.6, IF THEN ELSE(Scenario=4, 1.6, 1))
+	~	Dmnl
+	~	Process intensity target reached at the policy completion year.
+	|
+
+Deep recovery switch=
+	IF THEN ELSE(Scenario>=3, 1, 0)
+	~	Dmnl
+	~	Scenario choice: 1 = deep recovery of silicon and copper (FRELP thermal \
+		and chemical steps), 0 = bulk recovery only.
+	|
+
+Initial collection rate=
+	0.1
+	~	Dmnl
+	~	Collection rate at the policy start year.
+	|
+
+Initial process intensity=
+	0.5
+	~	Dmnl
+	~	Process intensity target at the policy start year.
+	|
+
+Policy start year=
+	2025
+	~	Year
+	~	Start of the linear phase-in of the circularity levers.
+	|
+
+Policy completion year=
+	2040
+	~	Year
+	~	End of the phase-in.
+	|
+
+Policy implementation fraction=
+	MIN(1, MAX(0, (Time-Policy start year)/(Policy completion year-Policy start year)))
+	~	Dmnl
+	~	Share of the lever change implemented, from 0 at the start year to 1 at \
+		the completion year.
+	|
+
+Collection rate=
+	Initial collection rate+(Final collection rate-Initial collection rate)*Policy implementation fraction
+	~	Dmnl
+	~	Share of the end-of-life flow that is collected (c).
+	|
+
+Target process intensity=
+	Initial process intensity+(Final process intensity-Initial process intensity)*Policy implementation fraction
+	~	Dmnl
+	~	Target treatment effort per tonne relative to the reference process.
+	|
+
+Deep recovery status=
+	Deep recovery switch*STEP(1, Policy start year)
+	~	Dmnl
+	~	1 when deep recovery is in operation (from the policy start year in S3 and \
+		S4).
+	|
+
+Glass mass fraction=
+	0.7
+	~	Dmnl
+	~	Mass fraction in the module (Latunussa et al. 2016).
+	|
+
+Reference recovery yield glass=
+	0.98
+	~	Dmnl
+	~	Recovery yield of the reference process.
+	|
+
+Recovery yield glass=
+	(1-(1-Reference recovery yield glass)^Process intensity)
+	~	Dmnl
+	~	First-order recovery: y = 1-(1-yref)^x.
+	|
+
+Recovered glass=
+	Treatment rate*Glass mass fraction*Recovery yield glass
+	~	Mt/Year
+	~		|
+
+Glass input requirement=
+	Production rate*Glass mass fraction
+	~	Mt/Year
+	~		|
+
+Secondary glass input=
+	MIN(Recovered glass, Maximum cullet share*Glass input requirement)
+	~	Mt/Year
+	~	Closed-loop input to module production.
+	|
+
+Aluminium mass fraction=
+	0.1853
+	~	Dmnl
+	~	Mass fraction in the module (Latunussa et al. 2016).
+	|
+
+Reference recovery yield aluminium=
+	0.986
+	~	Dmnl
+	~	Recovery yield of the reference process.
+	|
+
+Recovery yield aluminium=
+	(1-(1-Reference recovery yield aluminium)^Process intensity)
+	~	Dmnl
+	~	First-order recovery: y = 1-(1-yref)^x.
+	|
+
+Recovered aluminium=
+	Treatment rate*Aluminium mass fraction*Recovery yield aluminium
+	~	Mt/Year
+	~		|
+
+Aluminium input requirement=
+	Production rate*Aluminium mass fraction
+	~	Mt/Year
+	~		|
+
+Secondary aluminium input=
+	MIN(Recovered aluminium, Aluminium input requirement)
+	~	Mt/Year
+	~	Closed-loop input to module production.
+	|
+
+Silicon mass fraction=
+	0.0365
+	~	Dmnl
+	~	Mass fraction in the module (Latunussa et al. 2016).
+	|
+
+Reference recovery yield silicon=
+	0.95
+	~	Dmnl
+	~	Recovery yield of the reference process.
+	|
+
+Recovery yield silicon=
+	(1-(1-Reference recovery yield silicon)^Process intensity)*Deep recovery status
+	~	Dmnl
+	~	First-order recovery: y = 1-(1-yref)^x.
+	|
+
+Recovered silicon=
+	Treatment rate*Silicon mass fraction*Recovery yield silicon
+	~	Mt/Year
+	~		|
+
+Silicon input requirement=
+	Production rate*Silicon mass fraction
+	~	Mt/Year
+	~		|
+
+Secondary silicon input=
+	MIN(Recovered silicon, Silicon input requirement)
+	~	Mt/Year
+	~	Closed-loop input to module production.
+	|
+
+Copper mass fraction=
+	0.0046
+	~	Dmnl
+	~	Mass fraction in the module (Latunussa et al. 2016).
+	|
+
+Reference recovery yield copper=
+	0.95
+	~	Dmnl
+	~	Recovery yield of the reference process.
+	|
+
+Recovery yield copper=
+	(1-(1-Reference recovery yield copper)^Process intensity)*Deep recovery status
+	~	Dmnl
+	~	First-order recovery: y = 1-(1-yref)^x.
+	|
+
+Recovered copper=
+	Treatment rate*Copper mass fraction*Recovery yield copper
+	~	Mt/Year
+	~		|
+
+Copper input requirement=
+	Production rate*Copper mass fraction
+	~	Mt/Year
+	~		|
+
+Secondary copper input=
+	MIN(Recovered copper, Copper input requirement)
+	~	Mt/Year
+	~	Closed-loop input to module production.
+	|
+
+Maximum cullet share=
+	0.3
+	~	Dmnl
+	~	Ceiling on cullet in the glass batch (assumption).
+	|
+
+Glass to open loop recycling=
+	Recovered glass-Secondary glass input
+	~	Mt/Year
+	~	Recovered glass above the cullet limit, used outside module production.
+	|
+
+Recycled content share=
+	ZIDZ(Secondary glass input+Secondary aluminium input+Secondary silicon input+Secondary copper input\
+		, Glass input requirement+Aluminium input requirement+Silicon input requirement+Copper input requirement\
+		)
+	~	Dmnl
+	~	Secondary share of the four-material input to module production.
+	|
+
+Primary emission factor glass=
+	1.1
+	~	tCO2e/t
+	~		|
+
+Reprocessing emission factor glass=
+	0.5
+	~	tCO2e/t
+	~	Emissions of bringing the recovered fraction to production grade.
+	|
+
+Net emission saving glass=
+	Primary emission factor glass-Reprocessing emission factor glass
+	~	tCO2e/t
+	~		|
+
+Primary emission factor aluminium=
+	15.1
+	~	tCO2e/t
+	~		|
+
+Reprocessing emission factor aluminium=
+	0.52
+	~	tCO2e/t
+	~	Emissions of bringing the recovered fraction to production grade.
+	|
+
+Net emission saving aluminium=
+	Primary emission factor aluminium-Reprocessing emission factor aluminium
+	~	tCO2e/t
+	~		|
+
+Primary emission factor silicon=
+	42
+	~	tCO2e/t
+	~		|
+
+Reprocessing emission factor silicon=
+	31.7
+	~	tCO2e/t
+	~	Emissions of bringing the recovered fraction to production grade.
+	|
+
+Net emission saving silicon=
+	Primary emission factor silicon-Reprocessing emission factor silicon
+	~	tCO2e/t
+	~		|
+
+Primary emission factor copper=
+	4.6
+	~	tCO2e/t
+	~		|
+
+Reprocessing emission factor copper=
+	1.8
+	~	tCO2e/t
+	~	Emissions of bringing the recovered fraction to production grade.
+	|
+
+Net emission saving copper=
+	Primary emission factor copper-Reprocessing emission factor copper
+	~	tCO2e/t
+	~		|
+
+Open loop emission credit glass=
+	0.31
+	~	tCO2e/t
+	~		|
+
+Reference transport emissions=
+	107
+	~	kgCO2e/t
+	~	Transport emissions of the reference process (FRELP).
+	|
+
+Local haul share=
+	0.2
+	~	Dmnl
+	~	Share of transport emissions that does not grow with the collection rate \
+		(lambda).
+	|
+
+Reference collection rate=
+	0.5
+	~	Dmnl
+	~	Collection rate of the reference process (c_ref).
+	|
+
+Transport emissions=
+	Reference transport emissions*(Local haul share+(1-Local haul share)*(Collection rate\
+		/Reference collection rate)^0.5)
+	~	kgCO2e/t
+	~	Collection transport emissions per tonne (b_T); mean haul grows with the \
+		square root of the collection rate.
+	|
+
+Bulk separation emissions=
+	48
+	~	kgCO2e/t
+	~	Mechanical separation of frame and glass (FRELP), scales with x.
+	|
+
+Cell layer incineration emissions=
+	126
+	~	kgCO2e/t
+	~	Incineration of the cell layer in deep recovery (FRELP), independent of x.
+	|
+
+Chemical recovery emissions=
+	89
+	~	kgCO2e/t
+	~	Chemical recovery of silicon and copper in deep recovery (FRELP), scales \
+		with x.
+	|
+
+Separation emissions=
+	Bulk separation emissions*Process intensity+Deep recovery status*(Cell layer incineration emissions\
+		+Chemical recovery emissions*Process intensity)
+	~	kgCO2e/t
+	~	Separation and treatment emissions per tonne treated (b_S).
+	|
+
+Unit conversion kg per t=
+	1000
+	~	kgCO2e/tCO2e
+	~	Converts kg CO2e to t CO2e.
+	|
+
+Collection and treatment emissions=
+	Treatment rate*(Transport emissions+Separation emissions)/Unit conversion kg per t
+	~	MtCO2e/Year
+	~	Emissions of collection transport, separation and treatment.
+	|
+
+Expected benefit per tonne=
+	Glass mass fraction*Primary emission factor glass+Aluminium mass fraction*Primary emission factor aluminium\
+		+Silicon mass fraction*Primary emission factor silicon+Copper mass fraction*Primary emission factor copper
+	~	tCO2e/t
+	~	Displacement of primary production at original grade.
+	|
+
+Expected benefit=
+	Treatment rate*Expected benefit per tonne
+	~	MtCO2e/Year
+	~	B_exp: displacement of primary production at original grade.
+	|
+
+Emission credit glass=
+	Secondary glass input*Net emission saving glass+Glass to open loop recycling*Open loop emission credit glass
+	~	MtCO2e/Year
+	~		|
+
+Emission credit aluminium=
+	Recovered aluminium*Net emission saving aluminium
+	~	MtCO2e/Year
+	~		|
+
+Emission credit silicon=
+	Recovered silicon*Net emission saving silicon
+	~	MtCO2e/Year
+	~		|
+
+Emission credit copper=
+	Recovered copper*Net emission saving copper
+	~	MtCO2e/Year
+	~		|
+
+Actual benefit=
+	Emission credit glass+Emission credit aluminium+Emission credit silicon+Emission credit copper\
+		-Collection and treatment emissions
+	~	MtCO2e/Year
+	~	B_act: emission credits minus collection and treatment emissions.
+	|
+
+CMR=
+	1-ZIDZ(Actual benefit, Expected benefit)
+	~	Dmnl
+	~	Circular manufacturing rebound.
+	|
+
+Reprocessing emissions=
+	Recovered glass*Reprocessing emission factor glass+Recovered aluminium*Reprocessing emission factor aluminium\
+		+Recovered silicon*Reprocessing emission factor silicon+Recovered copper*Reprocessing emission factor copper
+	~	MtCO2e/Year
+	~	Emissions of bringing all recovered material to production grade.
+	|
+
+CMR grade component=
+	ZIDZ(Reprocessing emissions, Expected benefit)
+	~	Dmnl
+	~	Layer 1: reprocessing to grade (substitution correction).
+	|
+
+CMR loop component=
+	CMR-CMR grade component
+	~	Dmnl
+	~	Layer 2: unrecovered material, separation, transport and loop saturation.
+	|
+
+Accounting period=
+	PULSE(2025, 36)
+	~	Dmnl
+	~	1 from 2025 to 2060, 0 otherwise.
+	|
+
+Expected benefit inflow=
+	Expected benefit*Accounting period
+	~	MtCO2e/Year
+	~	Expected benefit counted in the accounting period.
+	|
+
+Actual benefit inflow=
+	Actual benefit*Accounting period
+	~	MtCO2e/Year
+	~	Actual benefit counted in the accounting period.
+	|
+
+Cumulative expected benefit=
+	INTEG(Expected benefit inflow, 0)
+	~	MtCO2e
+	~		|
+
+Cumulative actual benefit=
+	INTEG(Actual benefit inflow, 0)
+	~	MtCO2e
+	~		|
+
+Cumulative CMR=
+	1-ZIDZ(Cumulative actual benefit, Cumulative expected benefit)
+	~	Dmnl
+	~	Rebound over the accounting period 2025-2060.
+	|
+
+********************************************************
+	.Control
+********************************************************~
+		Simulation Control Parameters
+	|
+
+FINAL TIME  = 2070
+	~	Year
+	~	The final time for the simulation.
+	|
+
+INITIAL TIME  = 2000
+	~	Year
+	~	The initial time for the simulation.
+	|
+
+SAVEPER  = 1
+	~	Year [0,?]
+	~	The frequency with which output is stored.
+	|
+
+TIME STEP  = 0.125
+	~	Year [0,?]
+	~	The time step for the simulation.
+	|
+
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*View 1 Stock and flow
+$192-192-192,0,Arial|10||0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|96,96,100,0
+10,1,Products in use,360,130,52,22,3,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,2,Collected inventory,680,130,52,22,3,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,3,Recycling capacity,850,340,52,22,3,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,4,Production rate,120,215,49,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+12,5,48,70,130,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,6,8,1,4,0,0,22,0,0,0,-1--1--1,,1|(262,130)|
+1,7,8,5,100,0,0,22,0,0,0,-1--1--1,,1|(142,130)|
+11,8,0,210,130,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,9,Demand,210,164,46,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,10,12,2,4,0,0,22,0,0,0,-1--1--1,,1|(577,130)|
+1,11,12,1,100,0,0,22,0,0,0,-1--1--1,,1|(463,130)|
+11,12,0,520,130,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,13,Collection flow,520,148,49,11,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,14,48,1010,130,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,15,17,14,4,0,0,22,0,0,0,-1--1--1,,1|(928,130)|
+1,16,17,2,100,0,0,22,0,0,0,-1--1--1,,1|(788,130)|
+11,17,0,850,130,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,18,Treatment rate,850,148,46,11,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,19,48,360,290,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,20,22,19,4,0,0,22,0,0,0,-1--1--1,,1|(360,247)|
+1,21,22,1,100,0,0,22,0,0,0,-1--1--1,,1|(360,174)|
+11,22,0,360,205,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,23,Uncollected flow,360,223,52,11,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,24,48,600,340,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,25,27,3,4,0,0,22,0,0,0,-1--1--1,,1|(762,340)|
+1,26,27,24,100,0,0,22,0,0,0,-1--1--1,,1|(662,340)|
+11,27,0,720,340,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,28,Capacity change rate,720,358,66,11,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,29,Maximum production rate,14,279,75,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,30,Production growth rate,-6,162,72,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,31,Production inflection year,288,191,85,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,32,Ageing chain outflow 1,53,501,35,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,33,Ageing chain outflow 2,166,501,34,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,34,Ageing chain outflow 3,281,503,33,13,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,35,Ageing chain outflow 4,390,505,35,15,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,36,Ageing chain outflow 5,534,504,35,14,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,37,Ageing chain outflow 6,666,509,35,16,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,38,Average product lifetime,416,423,79,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,39,End of life flow,560,289,52,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,40,Collection rate,468,205,49,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,41,Capacity adjustment time,720,425,79,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,42,Target process intensity,898,394,79,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,43,Desired treatment rate,1000,225,72,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,44,Inventory clearance time,1120,170,79,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,45,Process intensity,1000,320,56,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,46,Minimum process intensity,1130,370,82,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,47,Target process intensity,1130,290,79,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,48,29,4,1,0,0,0,0,64,0,-1--1--1,,1|(94,259)|
+1,49,30,4,1,0,0,0,0,64,0,-1--1--1,,1|(44,205)|
+1,50,31,4,1,0,0,0,0,64,0,-1--1--1,,1|(201,213)|
+1,51,4,9,1,0,0,0,0,64,0,-1--1--1,,1|(131,192)|
+1,52,40,13,1,0,0,0,0,64,0,-1--1--1,,1|(502,183)|
+1,53,39,13,1,0,0,0,0,64,0,-1--1--1,,1|(520,235)|
+1,54,43,18,1,0,0,0,0,64,0,-1--1--1,,1|(957,164)|
+1,55,3,18,1,0,0,0,0,64,0,-1--1--1,,1|(837,244)|
+1,56,45,18,1,0,0,0,0,64,0,-1--1--1,,1|(923,257)|
+1,57,40,23,1,0,0,0,0,64,0,-1--1--1,,1|(430,222)|
+1,58,39,23,1,0,0,0,0,64,0,-1--1--1,,1|(466,283)|
+1,59,13,28,1,0,0,0,0,64,0,-1--1--1,,1|(644,236)|
+1,60,42,28,1,0,0,0,0,64,0,-1--1--1,,1|(816,391)|
+1,61,3,28,1,0,0,0,0,64,0,-1--1--1,,1|(788,299)|
+1,62,41,28,1,0,0,0,0,64,0,-1--1--1,,1|(730,398)|
+1,63,4,32,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,64,38,32,1,0,0,0,0,64,0,-1--1--1,,1|(214,446)|
+1,65,32,33,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,66,38,33,1,0,0,0,0,64,0,-1--1--1,,1|(304,448)|
+1,67,33,34,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,68,38,34,1,0,0,0,0,64,0,-1--1--1,,1|(353,449)|
+1,69,34,35,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,70,38,35,1,0,0,0,0,64,0,-1--1--1,,1|(424,455)|
+1,71,35,36,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,72,38,36,1,0,0,0,0,64,0,-1--1--1,,1|(475,448)|
+1,73,36,37,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,74,38,37,1,0,0,0,0,64,0,-1--1--1,,1|(531,438)|
+1,75,37,39,1,0,0,0,0,64,0,-1--1--1,,1|(603,420)|
+1,76,38,39,1,0,0,0,0,64,0,-1--1--1,,1|(460,354)|
+1,77,2,43,1,0,0,0,0,64,0,-1--1--1,,1|(819,192)|
+1,78,44,43,1,0,0,0,0,64,0,-1--1--1,,1|(1073,209)|
+1,79,13,43,1,0,0,0,0,64,0,-1--1--1,,1|(736,207)|
+1,80,47,45,1,0,0,0,0,64,0,-1--1--1,,1|(1052,285)|
+1,81,46,45,1,0,0,0,0,64,0,-1--1--1,,1|(1049,360)|
+1,82,3,45,1,0,0,0,0,64,0,-1--1--1,,1|(918,339)|
+1,83,43,45,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+10,84,Time,172,276,19,7,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,85,84,4,1,0,0,0,0,64,0,-1--1--1,,1|(146,265)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*View 2 Circularity levers
+$192-192-192,0,Arial|10||0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|96,96,100,0
+10,1,Scenario,430,50,26,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,2,Final collection rate,190,130,69,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,3,Final process intensity,430,130,75,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,4,Deep recovery switch,670,130,66,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,5,Initial collection rate,70,215,75,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,6,Policy implementation fraction,310,215,99,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,7,Initial process intensity,550,215,82,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,8,Collection rate,190,300,49,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,9,Target process intensity,430,300,79,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,10,Deep recovery status,670,300,66,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,11,Policy start year,250,390,56,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,12,Policy completion year,363,341,72,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,13,1,2,1,0,0,0,0,64,0,-1--1--1,,1|(308,65)|
+1,14,1,3,1,0,0,0,0,64,0,-1--1--1,,1|(422,82)|
+1,15,1,4,1,0,0,0,0,64,0,-1--1--1,,1|(545,62)|
+1,16,11,6,1,0,0,0,0,64,0,-1--1--1,,1|(257,310)|
+1,17,12,6,1,0,0,0,0,64,0,-1--1--1,,1|(329,297)|
+1,18,5,8,1,0,0,0,0,64,0,-1--1--1,,1|(107,273)|
+1,19,2,8,1,0,0,0,0,64,0,-1--1--1,,1|(177,213)|
+1,20,6,8,1,0,0,0,0,64,0,-1--1--1,,1|(241,244)|
+1,21,7,9,1,0,0,0,0,64,0,-1--1--1,,1|(503,261)|
+1,22,3,9,1,0,0,0,0,64,0,-1--1--1,,1|(414,205)|
+1,23,6,9,1,0,0,0,0,64,0,-1--1--1,,1|(363,263)|
+1,24,4,10,1,0,0,0,0,64,0,-1--1--1,,1|(682,211)|
+1,25,11,10,1,0,0,0,0,64,0,-1--1--1,,1|(465,369)|
+10,26,Time,310,238,19,7,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,27,26,6,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*View 3 Material recovery
+$192-192-192,0,Arial|10||0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|96,96,100,0
+10,1,Reference recovery yield glass,135,80,99,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,2,Process intensity,275,80,56,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,3,Recovery yield glass,210,145,66,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,4,Treatment rate,125,210,46,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,5,Glass mass fraction,310,210,62,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,6,Recovered glass,210,275,49,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,7,Production rate,374,278,49,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,8,Glass input requirement,310,340,75,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,9,Secondary glass input,210,410,69,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,10,Reference recovery yield aluminium,405,80,112,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,11,Process intensity,545,80,56,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,12,Recovery yield aluminium,480,145,79,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,13,Treatment rate,401,204,46,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,14,Aluminium mass fraction,580,210,75,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,15,Recovered aluminium,480,275,62,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,16,Production rate,635,278,49,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,17,Aluminium input requirement,580,340,89,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,18,Secondary aluminium input,480,410,82,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,19,Reference recovery yield silicon,675,80,105,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,20,Process intensity,815,80,56,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,21,Deep recovery status,898,144,43,12,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,22,Recovery yield silicon,750,145,72,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,23,Treatment rate,679,193,46,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,24,Silicon mass fraction,850,210,69,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,25,Recovered silicon,750,275,56,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,26,Production rate,912,286,49,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,27,Silicon input requirement,850,340,82,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,28,Secondary silicon input,750,410,75,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,29,Reference recovery yield copper,945,80,102,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,30,Process intensity,1085,80,56,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,31,Deep recovery status,1220,135,66,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,32,Recovery yield copper,1020,145,69,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,33,Treatment rate,950,196,46,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,34,Copper mass fraction,1120,210,66,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,35,Recovered copper,1020,275,52,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,36,Production rate,1210,272,49,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,37,Copper input requirement,1120,340,79,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,38,Secondary copper input,1020,410,72,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,39,Maximum cullet share,282,499,66,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,40,Glass to open loop recycling,90,480,92,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,41,Recycled content share,615,520,72,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+1,42,1,3,1,0,0,0,0,64,0,-1--1--1,,1|(162,119)|
+1,43,2,3,1,0,0,0,0,64,0,-1--1--1,,1|(255,116)|
+1,44,4,6,1,0,0,0,0,64,0,-1--1--1,,1|(162,246)|
+1,45,5,6,1,0,0,0,0,64,0,-1--1--1,,1|(271,246)|
+1,46,3,6,1,0,0,0,0,64,0,-1--1--1,,1|(199,203)|
+1,47,7,8,1,0,0,0,0,64,0,-1--1--1,,1|(357,314)|
+1,48,5,8,1,0,0,0,0,64,0,-1--1--1,,1|(299,269)|
+1,49,6,9,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,50,39,9,1,0,0,0,0,64,0,-1--1--1,,1|(234,464)|
+1,51,8,9,1,0,0,0,0,64,0,-1--1--1,,1|(270,374)|
+1,52,10,12,1,0,0,0,0,64,0,-1--1--1,,1|(433,113)|
+1,53,11,12,1,0,0,0,0,64,0,-1--1--1,,1|(524,109)|
+1,54,13,15,1,0,0,0,0,64,0,-1--1--1,,1|(429,238)|
+1,55,14,15,1,0,0,0,0,64,0,-1--1--1,,1|(538,245)|
+1,56,12,15,1,0,0,0,0,64,0,-1--1--1,,1|(472,206)|
+1,57,16,17,1,0,0,0,0,64,0,-1--1--1,,1|(615,307)|
+1,58,14,17,1,0,0,0,0,64,0,-1--1--1,,1|(569,271)|
+1,59,15,18,1,0,0,0,0,64,0,-1--1--1,,1|(472,335)|
+1,60,17,18,1,0,0,0,0,64,0,-1--1--1,,1|(540,380)|
+1,61,19,22,1,0,0,0,0,64,0,-1--1--1,,1|(708,117)|
+1,62,20,22,1,0,0,0,0,64,0,-1--1--1,,1|(789,111)|
+1,63,21,22,1,0,0,0,0,64,0,-1--1--1,,1|(843,128)|
+1,64,23,25,1,0,0,0,0,64,0,-1--1--1,,1|(726,218)|
+1,65,24,25,1,0,0,0,0,64,0,-1--1--1,,1|(794,229)|
+1,66,22,25,1,0,0,0,0,64,0,-1--1--1,,1|(757,201)|
+1,67,26,27,1,0,0,0,0,64,0,-1--1--1,,1|(899,314)|
+1,68,24,27,1,0,0,0,0,64,0,-1--1--1,,1|(831,266)|
+1,69,25,28,1,0,0,0,0,64,0,-1--1--1,,1|(761,333)|
+1,70,27,28,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,71,29,32,1,0,0,0,0,64,0,-1--1--1,,1|(972,116)|
+1,72,30,32,1,0,0,0,0,64,0,-1--1--1,,1|(1070,114)|
+1,73,31,32,1,0,0,0,0,64,0,-1--1--1,,1|(1131,155)|
+1,74,33,35,1,0,0,0,0,64,0,-1--1--1,,1|(971,245)|
+1,75,34,35,1,0,0,0,0,64,0,-1--1--1,,1|(1067,230)|
+1,76,32,35,1,0,0,0,0,64,0,-1--1--1,,1|(1037,206)|
+1,77,36,37,1,0,0,0,0,64,0,-1--1--1,,1|(1188,324)|
+1,78,34,37,1,0,0,0,0,64,0,-1--1--1,,1|(1101,268)|
+1,79,35,38,1,0,0,0,0,64,0,-1--1--1,,1|(1002,333)|
+1,80,37,38,1,0,0,0,0,64,0,-1--1--1,,1|(1083,375)|
+1,81,6,40,1,0,0,0,0,64,0,-1--1--1,,1|(133,365)|
+1,82,9,40,1,0,0,0,0,64,0,-1--1--1,,1|(164,447)|
+1,83,9,41,1,0,0,0,0,64,0,-1--1--1,,1|(405,477)|
+1,84,18,41,1,0,0,0,0,64,0,-1--1--1,,1|(540,468)|
+1,85,28,41,1,0,0,0,0,64,0,-1--1--1,,1|(669,455)|
+1,86,38,41,1,0,0,0,0,64,0,-1--1--1,,1|(833,476)|
+1,87,8,41,1,0,0,0,0,64,0,-1--1--1,,1|(455,441)|
+1,88,17,41,1,0,0,0,0,64,0,-1--1--1,,1|(585,427)|
+1,89,27,41,1,0,0,0,0,64,0,-1--1--1,,1|(766,440)|
+1,90,37,41,1,0,0,0,0,64,0,-1--1--1,,1|(888,441)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*View 4 Rebound assessment
+$192-192-192,0,Arial|10||0-0-0|0-0-0|0-0-255|-1--1--1|-1--1--1|96,96,78,0
+10,1,Collection rate,1294,17,49,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,2,Reference transport emissions,1139,69,95,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,3,Local haul share,1231,40,52,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,4,Reference collection rate,1388,62,82,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,5,Bulk separation emissions,1529,14,82,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,6,Cell layer incineration emissions,1639,14,108,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,7,Chemical recovery emissions,1846,39,89,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,8,Process intensity,1493,86,56,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,9,Deep recovery status,1718,69,66,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,10,Transport emissions,1289,139,62,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,11,Separation emissions,1629,139,66,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,12,Treatment rate,1694,210,46,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,13,Unit conversion kg per t,1689,274,79,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,14,Collection and treatment emissions,1469,219,112,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,15,Treatment rate,549,139,46,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,16,Expected benefit,659,219,52,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,17,CMR,959,139,22,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,18,Actual benefit,1249,219,46,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,19,Expected benefit per tonne,659,304,85,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,20,Glass mass fraction,549,246,62,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,21,Emission credit glass,909,319,69,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,22,Net emission saving glass,909,414,82,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,23,Primary emission factor glass,849,494,95,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,24,Reprocessing emission factor glass,974,534,112,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,25,Secondary glass input,825,234,69,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,26,Glass to open loop recycling,1008,232,92,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,27,Open loop emission credit glass,1014,369,102,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,28,Aluminium mass fraction,465,272,52,6,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,29,Emission credit aluminium,1149,319,82,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,30,Net emission saving aluminium,1149,414,95,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,31,Primary emission factor aluminium,1089,494,108,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,32,Reprocessing emission factor aluminium,1214,534,125,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,33,Recovered aluminium,1261,391,62,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,34,Silicon mass fraction,464,343,50,9,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,35,Emission credit silicon,1389,319,75,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,36,Net emission saving silicon,1389,414,89,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,37,Primary emission factor silicon,1329,494,102,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,38,Reprocessing emission factor silicon,1454,534,118,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,39,Recovered silicon,1474,369,56,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,40,Copper mass fraction,506,386,50,7,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,41,Emission credit copper,1629,319,72,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,42,Net emission saving copper,1629,414,85,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,43,Primary emission factor copper,1569,494,99,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,44,Reprocessing emission factor copper,1694,534,115,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,45,Recovered copper,1714,369,52,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,46,Cumulative expected benefit,889,634,52,22,3,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,47,Cumulative actual benefit,889,744,52,22,3,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,48,Expected benefit,694,566,52,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,49,Actual benefit,639,799,46,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,50,Accounting period,610,693,56,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+12,51,48,619,634,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,52,54,46,4,0,0,22,0,0,0,-1--1--1,,1|(796,634)|
+1,53,54,51,100,0,0,22,0,0,0,-1--1--1,,1|(686,634)|
+11,54,0,749,634,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,55,Expected benefit inflow,749,652,75,11,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,56,48,619,744,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,57,59,47,4,0,0,22,0,0,0,-1--1--1,,1|(796,744)|
+1,58,59,56,100,0,0,22,0,0,0,-1--1--1,,1|(686,744)|
+11,59,0,749,744,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,60,Actual benefit inflow,749,762,69,11,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,61,Cumulative CMR,1069,689,46,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,62,Reprocessing emissions,1249,634,72,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,63,CMR grade component,1249,714,62,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,64,CMR loop component,1419,714,59,11,8,3,0,0,0,0,0,0,0,0,0,0,0,0
+10,65,Expected benefit,1109,764,52,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,66,CMR,1419,634,22,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+10,67,Recovered glass,1157,574,49,11,8,2,0,3,-1,0,0,0,128-128-128,0-0-0,|||128-128-128,0,0,0,0,0,0
+1,68,2,10,1,0,0,0,0,64,0,-1--1--1,,1|(1206,115)|
+1,69,3,10,1,0,0,0,0,64,0,-1--1--1,,1|(1246,92)|
+1,70,1,10,1,0,0,0,0,64,0,-1--1--1,,1|(1303,81)|
+1,71,4,10,1,0,0,0,0,64,0,-1--1--1,,1|(1346,101)|
+1,72,5,11,1,0,0,0,0,64,0,-1--1--1,,1|(1570,86)|
+1,73,8,11,1,0,0,0,0,64,0,-1--1--1,,1|(1546,126)|
+1,74,9,11,1,0,0,0,0,64,0,-1--1--1,,1|(1683,106)|
+1,75,6,11,1,0,0,0,0,64,0,-1--1--1,,1|(1653,71)|
+1,76,7,11,1,0,0,0,0,64,0,-1--1--1,,1|(1745,106)|
+1,77,12,14,1,0,0,0,0,64,0,-1--1--1,,1|(1620,194)|
+1,78,10,14,1,0,0,0,0,64,0,-1--1--1,,1|(1383,164)|
+1,79,11,14,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,80,13,14,1,0,0,0,0,64,0,-1--1--1,,1|(1582,256)|
+1,81,15,16,1,0,0,0,0,64,0,-1--1--1,,1|(610,161)|
+1,82,19,16,1,0,0,0,0,64,0,-1--1--1,,1|(650,266)|
+1,83,18,17,1,0,0,0,0,64,0,-1--1--1,,1|(1106,165)|
+1,84,16,17,1,0,0,0,0,64,0,-1--1--1,,1|(785,159)|
+1,85,21,18,1,0,0,0,0,64,0,-1--1--1,,1|(1075,283)|
+1,86,29,18,1,0,0,0,0,64,0,-1--1--1,,1|(1207,280)|
+1,87,35,18,1,0,0,0,0,64,0,-1--1--1,,1|(1311,284)|
+1,88,41,18,1,0,0,0,0,64,0,-1--1--1,,1|(1443,287)|
+1,89,14,18,1,0,0,0,0,64,0,-1--1--1,,1|(1336,205)|
+1,90,20,19,1,0,0,0,0,64,0,-1--1--1,,1|(609,264)|
+1,91,23,19,1,0,0,0,0,64,0,-1--1--1,,1|(741,415)|
+1,92,28,19,1,0,0,0,0,64,0,-1--1--1,,1|(550,277)|
+1,93,31,19,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,94,34,19,1,0,0,0,0,64,0,-1--1--1,,1|(552,336)|
+1,95,37,19,1,0,0,0,0,64,0,-1--1--1,,1|(989,433)|
+1,96,40,19,1,0,0,0,0,64,0,-1--1--1,,1|(590,360)|
+1,97,43,19,1,0,0,0,0,64,0,-1--1--1,,1|(1109,445)|
+1,98,25,21,1,0,0,0,0,64,0,-1--1--1,,1|(857,285)|
+1,99,22,21,1,0,0,0,0,64,0,-1--1--1,,1|(917,367)|
+1,100,26,21,1,0,0,0,0,64,0,-1--1--1,,1|(968,278)|
+1,101,27,21,1,0,0,0,0,64,0,-1--1--1,,1|(974,341)|
+1,102,23,22,1,0,0,0,0,64,0,-1--1--1,,1|(883,463)|
+1,103,24,22,1,0,0,0,0,64,0,-1--1--1,,1|(934,488)|
+1,104,33,29,1,0,0,0,0,64,0,-1--1--1,,1|(1225,345)|
+1,105,30,29,1,0,0,0,0,64,0,-1--1--1,,1|(1135,370)|
+1,106,31,30,1,0,0,0,0,64,0,-1--1--1,,1|(1125,463)|
+1,107,32,30,1,0,0,0,0,64,0,-1--1--1,,1|(1175,483)|
+1,108,39,35,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,109,36,35,1,0,0,0,0,64,0,-1--1--1,,1|(1372,369)|
+1,110,37,36,1,0,0,0,0,64,0,-1--1--1,,1|(1333,454)|
+1,111,38,36,1,0,0,0,0,64,0,-1--1--1,,1|(1436,470)|
+1,112,45,41,1,0,0,0,0,64,0,-1--1--1,,1|(1715,343)|
+1,113,42,41,1,0,0,0,0,64,0,-1--1--1,,1|(1616,374)|
+1,114,43,42,1,0,0,0,0,64,0,-1--1--1,,1|(1575,449)|
+1,115,44,42,1,0,0,0,0,64,0,-1--1--1,,1|(1678,468)|
+1,116,48,55,1,0,0,0,0,64,0,-1--1--1,,1|(740,602)|
+1,117,50,55,1,0,0,0,0,64,0,-1--1--1,,1|(676,683)|
+1,118,49,60,1,0,0,0,0,64,0,-1--1--1,,1|(694,800)|
+1,119,50,60,1,0,0,0,0,64,0,-1--1--1,,1|(681,713)|
+1,120,47,61,1,0,0,0,0,64,0,-1--1--1,,1|(989,729)|
+1,121,46,61,1,0,0,0,0,64,0,-1--1--1,,1|(983,641)|
+1,122,67,62,1,0,0,0,0,64,0,-1--1--1,,1|(1190,605)|
+1,123,24,62,1,0,0,0,0,64,0,-1--1--1,,1|(1098,597)|
+1,124,33,62,1,0,0,0,0,64,0,-1--1--1,,1|(1239,507)|
+1,125,32,62,1,0,0,0,0,64,0,-1--1--1,,1|(1221,584)|
+1,126,39,62,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,127,38,62,0,0,0,0,0,64,0,-1--1--1,,1|(0,0)|
+1,128,45,62,1,0,0,0,0,64,0,-1--1--1,,1|(1514,541)|
+1,129,44,62,1,0,0,0,0,64,0,-1--1--1,,1|(1487,601)|
+1,130,62,63,1,0,0,0,0,64,0,-1--1--1,,1|(1239,667)|
+1,131,65,63,1,0,0,0,0,64,0,-1--1--1,,1|(1187,757)|
+1,132,66,64,1,0,0,0,0,64,0,-1--1--1,,1|(1430,665)|
+1,133,63,64,1,0,0,0,0,64,0,-1--1--1,,1|(1328,697)|
+///---\\\
+:L<%^E!@
+1:Initial.vdfx
+4:Time
+5:Local haul share
+9:Initial
+19:78,3
+24:2000
+25:2070
+26:2070
+15:0,0,0,0,0,0
+27:0,
+34:0,
+42:0
+72:0
+73:0
+95:0
+96:0
+97:0
+77:0
+78:0
+102:1
+93:0
+94:0
+92:0
+91:0
+90:0
+87:0
+75:
+43:
+103:8,8,8,3,8
+105:0,0,0,0,0,0,0,0,0,0
+104:Vensim Sans|12||0-0-0|0-0-0|-1--1--1|0-0-255|192-192-192|-1--1--1
